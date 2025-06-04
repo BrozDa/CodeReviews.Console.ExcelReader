@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ExcelReader.BrozDa": {
+      "commandName": "Project",
+      "workingDirectory": "E:\\Git Repos\\CodeReviews.Console.ExcelReader\\ExcelReader.BrozDa\\ExcelReader.BrozDa"
+    }
+  }
+}
