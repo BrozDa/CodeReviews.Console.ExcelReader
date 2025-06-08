@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using System.Runtime.Versioning;
+using System.Text.RegularExpressions;
 
 namespace ExcelReader.BrozDa
 {
@@ -12,10 +13,14 @@ namespace ExcelReader.BrozDa
 
             ExcelPackage.License.SetNonCommercialPersonal("BrozDa");
 
-            ExcelReadingService svc = new ExcelReadingService();
+            string path = Path.Combine(Environment.CurrentDirectory, "Resources/people-100.xlsx");
 
-            var result = svc.ReadExcelFile();
-            Console.WriteLine("a");
+            ExcelReadingService service = new ExcelReadingService(path);
+
+            var records = service.GetAllRecords();
+            Console.ReadLine();
+
+
         }
     }
 }
