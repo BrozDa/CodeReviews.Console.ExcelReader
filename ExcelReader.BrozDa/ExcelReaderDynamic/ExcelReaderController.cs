@@ -21,7 +21,7 @@ namespace ExcelReaderDynamic
         {
             var records = reader.GetAllRecords();
 
-            var headers = records[0].Data.Keys.ToList();
+            var headers = records[0].Headers;
 
             await repo.CreateTable(headers);
 

@@ -32,13 +32,13 @@ namespace ExcelReaderDynamic
             _headers = GetHeaders(excelWorksheet);
             List<Record> records = new();
 
-
-            
-            
-
             for (int row = 2; row <= excelWorksheet.Dimension.Rows; row++)
             {
-                records.Add(GetSingleRecord(excelWorksheet, _headers, row));
+                records.Add(new Record()
+                {
+                    Headers = _headers,
+                    Data = GetData(excelWorksheet, row),
+                });
             }
 
             return records;
@@ -55,18 +55,16 @@ namespace ExcelReaderDynamic
             return headers;
         }
         
-        
-        private Record GetSingleRecord(ExcelWorksheet sheet, List<string> headers, int row)
+        private List<string> GetData(ExcelWorksheet sheet, int row)
         {
-            Record rowData = new();
+            List<string> data = new();
 
             for (int col = 1; col <= sheet.Dimension.Columns; col++)
             {
-                rowData.Data[headers[col - 1]] = sheet.Cells[row, col].Text;
+                data.Add(sheet.Cells[row, col].Text);
             }
 
-            return rowData;
-
+            return data;
         }
         /*private Person MapDataRowToPerson(Dictionary<string, string> dataRow)
         {

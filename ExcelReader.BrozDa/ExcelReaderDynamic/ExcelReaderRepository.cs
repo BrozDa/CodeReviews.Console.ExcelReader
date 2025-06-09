@@ -59,18 +59,17 @@ namespace ExcelReaderDynamic
             using var connection = new SqlConnection(connectionStringDB);
 
 
-            var columns = string.Join(",", ExcelRecords[0].Data.Keys.Select(x => $"[{x}]"));
+            var columns = string.Join(",", ExcelRecords[0].Headers.Select(x => $"[{x}]"));
 
             foreach (var record in ExcelRecords) 
             {
-                var data = string.Join(",", record.Data.Values.Select(x => $"'{x}'"));
+                var data = string.Join(",", record.Data.Select(x => $"'{x}'"));
 
                 string sql = @$"INSERT INTO [ExcelData] ({columns}) VALUES ({data});";
 
                 await connection.ExecuteAsync(sql);
             }
 
-            Console.WriteLine("AAAAAAAAAAAAAAAAA");
         }
         public async Task TaskInsertRow(Record record)
         {
