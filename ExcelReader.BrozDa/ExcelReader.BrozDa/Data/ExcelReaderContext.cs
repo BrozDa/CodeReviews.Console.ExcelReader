@@ -12,7 +12,7 @@ namespace ExcelReader.BrozDa.Data
     {
         private string _connectionString = @"Data Source=(localdb)\LOCALDB;Initial Catalog=ExcelReader;Integrated Security=True;Connect Timeout=30;Encrypt=True;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False";
 
-        DbSet<Person> Persons { get; set; } = null!;
+        public DbSet<Person> Persons { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

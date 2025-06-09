@@ -14,18 +14,24 @@ namespace ExcelReader.BrozDa
         public ExcelReaderContext DbContext { get; }
         public ExcelReadingService ReadingService { get; }
 
+        public UiService UiService { get; }
+
         public ExcelReaderController(
             ExcelReaderContext dbContext, 
-            ExcelReadingService readingService)
+            ExcelReadingService readingService,
+            UiService uiService)
         {
             DbContext = dbContext;
             ReadingService = readingService;
+            UiService = uiService;
         }
 
         public void Run()
         {
             List<Person> persons = GetExcelData(); //checked and list of 100 records is present here
             PopulateDb(persons);
+
+            UiService.PrintDatabase(GetPersonsFromDb());
         }
         private List<Person> GetExcelData()
         {
@@ -35,8 +41,13 @@ namespace ExcelReader.BrozDa
         private void PopulateDb(List<Person> persons)
         {
             Console.WriteLine("Populating DB");
-            DbContext.AddRange(persons);
+            DbContext.Persons.AddRange(persons);
             DbContext.SaveChanges();
+        }
+        private List<Person> GetPersonsFromDb()
+        {
+            Console.WriteLine("Fetching data from db");
+            return DbContext.Persons.ToList();
         }
 
     }
