@@ -1,0 +1,6 @@
+{
+  "ConnectionStrings": {
+    "ExcelReaderDB": "Data Source=(localdb)\\LOCALDB;Initial Catalog=ExcelReaderDynamic;Integrated Security=True;",
+    "MasterDB": "Data Source=(localdb)\\LOCALDB;Initial Catalog=master;Integrated Security=True;"
+  }
+}

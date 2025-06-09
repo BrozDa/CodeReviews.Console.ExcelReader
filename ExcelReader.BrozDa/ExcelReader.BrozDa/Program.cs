@@ -24,7 +24,7 @@ namespace ExcelReader.BrozDa
 
             var controller = sp.GetRequiredService<ExcelReaderController>();
 
-            controller.Run();
+            //controller.Run();
 
         }
         public static ServiceProvider BuildServices(ServiceCollection services)

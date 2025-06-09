@@ -1,4 +1,8 @@
-﻿using OfficeOpenXml;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OfficeOpenXml;
+using ExcelReaderDynamic.Services;
+using ExcelReaderDynamic.Repository;
+using Microsoft.Extensions.Configuration;
 
 namespace ExcelReaderDynamic
 {
@@ -6,20 +10,38 @@ namespace ExcelReaderDynamic
     {
         static async Task Main(string[] args)
         {
+
             ExcelPackage.License.SetNonCommercialPersonal("BrozDa");
 
-            string path = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\people-100.xlsx";
+            var services = new ServiceCollection();
 
-            ExcelReader reader = new ExcelReader(path);
+            var serviceProvider = BuildServices(services);
 
-            ExcelReaderRepository repo = new ExcelReaderRepository();
-            await repo.SetupDb();
+            var controller = serviceProvider.GetRequiredService<ExcelReaderController>();
 
-            ExcelReaderController ctrl = new ExcelReaderController(reader, repo);
+            await controller.Run();
 
-            ctrl.Run();
+        }
 
-            Console.ReadLine();
+        public static ServiceProvider BuildServices(ServiceCollection services)
+        {
+            string excelFilePath = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\people-100.xlsx";
+
+            var repoConfiguration = new ConfigurationBuilder()
+                .AddJsonFile(@"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\appconfig.json")
+                .Build();
+
+            services.AddSingleton<IConfiguration>(repoConfiguration);
+
+            services.AddScoped<ExcelReaderService>();
+            services.AddScoped<ExcelReaderRepository>();
+            services.AddScoped<UiService>();
+            services.AddScoped<ExcelReaderController>();
+            
+
+            return services.BuildServiceProvider();
+
+        
         }
     }
 }
