@@ -1,11 +1,8 @@
 ﻿using ExcelReader.BrozDa.Data;
 using ExcelReader.BrozDa.Models;
 using ExcelReader.BrozDa.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml;
-using System.Runtime.Versioning;
-using System.Text.RegularExpressions;
 
 namespace ExcelReader.BrozDa
 {
@@ -26,12 +23,8 @@ namespace ExcelReader.BrozDa
             db.Database.EnsureCreated();
 
             var controller = sp.GetRequiredService<ExcelReaderController>();
+
             controller.Run();
-
-            List<string> dataProperties = typeof(Person).GetProperties().Select(x => x.Name).ToList();
-
-            Console.WriteLine(string.Join("|", dataProperties));
-
 
         }
         public static ServiceProvider BuildServices(ServiceCollection services)

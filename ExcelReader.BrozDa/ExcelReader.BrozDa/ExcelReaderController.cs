@@ -26,14 +26,14 @@ namespace ExcelReader.BrozDa
             UiService = uiService;
         }
 
-        public void Run()
+       /* public void Run()
         {
-            List<Person> persons = GetExcelData(); //checked and list of 100 records is present here
+            List<Person> persons = GetExcelData();
             PopulateDb(persons);
 
             UiService.PrintDatabase(GetPersonsFromDb());
-        }
-        private List<Person> GetExcelData()
+        }*/
+        /*private List<Person> GetExcelData()
         {
             Console.WriteLine("Reading Excel Data");
             return ReadingService.GetAllRecords();
@@ -49,6 +49,6 @@ namespace ExcelReader.BrozDa
             Console.WriteLine("Fetching data from db");
             return DbContext.Persons.ToList();
         }
-
+        */
     }
 }
