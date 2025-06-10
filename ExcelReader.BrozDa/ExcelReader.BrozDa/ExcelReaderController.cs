@@ -1,4 +1,5 @@
-﻿using ExcelReader.Brozda.Models;
+﻿using ExcelReader.Brozda.Helpers;
+using ExcelReader.Brozda.Models;
 using ExcelReaderDynamic.Repository;
 using ExcelReaderDynamic.Services;
 using Spectre.Console;
@@ -41,11 +42,11 @@ namespace ExcelReaderDynamic
 
         private void MapMenu()
         {
-            menuOptionMap.Add((int)MenuOptions.SpecifyFile, "Specify File");
-            menuOptionMap.Add((int)MenuOptions.ImportDataFromFile, "Import data from file");
-            menuOptionMap.Add((int)MenuOptions.ReadDatabase, "Read data from repository");
-            menuOptionMap.Add((int)MenuOptions.ExportDataToFile, "Export data to file");
-            menuOptionMap.Add((int)MenuOptions.Exit, "Exit the app");
+            menuOptionMap.Add((int)MenuOptions.SpecifyFile, AppStrings.Menu_SpecifyFile);
+            menuOptionMap.Add((int)MenuOptions.ImportDataFromFile, AppStrings.Menu_ImportDataFromFile);
+            menuOptionMap.Add((int)MenuOptions.ReadDatabase, AppStrings.Menu_ReadDatabase);
+            menuOptionMap.Add((int)MenuOptions.ExportDataToFile, AppStrings.Menu_ExportDataToFile);
+            menuOptionMap.Add((int)MenuOptions.Exit, AppStrings.Menu_Exit);
         }
         public async Task Run()
         {
@@ -69,7 +70,7 @@ namespace ExcelReaderDynamic
         }
         private async Task<bool> InitializeDb()
         {
-            Console.WriteLine("Initializing DB");
+            UiSvc.PrintText(AppStrings.Status_InitializingDb);
 
             var initializeResult = await ReaderRepository.InitializeDb();
 
@@ -102,8 +103,15 @@ namespace ExcelReaderDynamic
         private void ProcessSpecifyFile()
         {
             string path = UiSvc.GetFilePathFromUser();
-            
+
             FilePath = path;
+
+            if (!File.Exists(FilePath))
+            {
+                UiSvc.PrintText(AppStrings.Error_FileDoesNotExist);
+                UiSvc.PressAnyKeyToContinue();
+            }
+           
         }
         private async Task ProcessImportDataFromFile()
         {
@@ -118,7 +126,8 @@ namespace ExcelReaderDynamic
         {
             var headers = records[0].Headers;
 
-            Console.WriteLine("Creating table");
+
+            UiSvc.PrintText(AppStrings.Status_CreatingTable);
             var createTableResult = await ReaderRepository.CreateTable(headers);
             if (!createTableResult.IsSuccessful)
             {
@@ -127,7 +136,7 @@ namespace ExcelReaderDynamic
                 return;
             }
 
-            Console.WriteLine("Inserting records");
+            UiSvc.PrintText(AppStrings.Status_PopulatingDb);
             var insertResult = await ReaderRepository.InsertBulk(records);
 
             if (!insertResult.IsSuccessful)
@@ -136,26 +145,26 @@ namespace ExcelReaderDynamic
                 return;
             }
 
-            Console.WriteLine("Data successfully imported");
+            UiSvc.PrintText(AppStrings.Status_DbPopulated);
         }
 
         private List<Record>? GetDataFromFile()
         {
             if (FilePath == string.Empty)
             {
-                Console.WriteLine("Path not specified");
+                UiSvc.PrintText(AppStrings.Error_PathNotSpecified);
                 UiSvc.PressAnyKeyToContinue();
                 return null;
             }
             if (!File.Exists(FilePath))
             {
-                Console.WriteLine("Path invalid, File does not exist");
+                UiSvc.PrintText(AppStrings.Error_FileDoesNotExist);
                 UiSvc.PressAnyKeyToContinue();
                 return null;
             }
 
 
-            Console.WriteLine("Reading file");
+            UiSvc.PrintText(AppStrings.Status_ReadingFile);
 
             var records = GetRecords();
 
@@ -207,26 +216,37 @@ namespace ExcelReaderDynamic
             //overwrite logic
             if (File.Exists(path) && !UiSvc.ConfirmOverwrite())
             {
-               Console.WriteLine("Operation cancelled");
+                UiSvc.PrintText(AppStrings.Status_OperationCancelled);
                 return;
             }
+
+            UiSvc.PrintText(AppStrings.Status_GettingRecordsFromDb);
 
             var readDbResult = await ReaderRepository.GetAll();
 
             if (!readDbResult.IsSuccessful)
             {
-                Console.WriteLine(readDbResult.ErrorMessage);
+                UiSvc.PrintText(readDbResult.ErrorMessage);
+                UiSvc.PressAnyKeyToContinue();
                 return;
             }
 
             string extension = Path.GetExtension(path).ToLowerInvariant();
             switch (extension)
             {
-                case ".xlsx": ExcelReaderSvc.WriteToFile(path, readDbResult.Data!); break;
-                case ".csv": CsvReaderSvc.WriteToFile(path, readDbResult.Data!); break;
+                case ".xlsx":
+                    UiSvc.PrintText(AppStrings.Status_WritingToFile);
+                    ExcelReaderSvc.WriteToFile(path, readDbResult.Data!); 
+                    break;
+                case ".csv":
+                    UiSvc.PrintText(AppStrings.Status_WritingToFile);
+                    CsvReaderSvc.WriteToFile(path, readDbResult.Data!); 
+                    break;
                 default: break;
             }
-           
+            UiSvc.PrintText(AppStrings.Status_WritingToFileFinished);
+            UiSvc.PressAnyKeyToContinue();
+
         }
     }
 }

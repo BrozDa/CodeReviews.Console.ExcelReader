@@ -19,10 +19,14 @@ namespace ExcelReaderDynamic.Services
         {
             Console.Clear();
         }
-        public void PrintErrorMsg(string errorMsg)
+        public void PrintErrorMsg(string? errorMsg)
         {
-            Console.WriteLine(errorMsg);
+            Console.WriteLine(errorMsg ?? "Unspecified error");
             PressAnyKeyToContinue();
+        }
+        public void PrintText(string text)
+        {
+            Console.WriteLine(text);
         }
         public int GetMenuInput(Dictionary<int, string> menuOptionMap)
         {
