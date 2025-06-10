@@ -9,6 +9,12 @@ namespace ExcelReaderDynamic.Services
 {
     internal class UiService
     {
+        public void PressAnyKeyToContinue()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey(); 
+        }
         public int GetMenuInput(Dictionary<int, string> menuOptionMap)
         {
             var input = AnsiConsole.Prompt(
@@ -29,6 +35,7 @@ namespace ExcelReaderDynamic.Services
             }
 
             AnsiConsole.Write(table);
+            PressAnyKeyToContinue();
         }
         public string GetFilePathFromUser()
         {

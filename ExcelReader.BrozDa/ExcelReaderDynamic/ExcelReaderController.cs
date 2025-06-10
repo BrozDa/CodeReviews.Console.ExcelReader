@@ -5,7 +5,6 @@ namespace ExcelReaderDynamic
 {
     internal class ExcelReaderController
     {
-        public Dictionary<int, string> menuOptionMap = new();
         public enum MenuOptions
         {
             SpecifyFile = 1,
@@ -16,14 +15,26 @@ namespace ExcelReaderDynamic
 
         }
 
-        public ExcelReaderService reader;
-        public ExcelReaderRepository repo;
-        private UiService _ui;
-        public ExcelReaderController(ExcelReaderService reader, ExcelReaderRepository repo, UiService ui)
+        public Dictionary<int, string> menuOptionMap = new();
+
+        public string file = Environment.CurrentDirectory;
+        public string FilePath { get; set; } = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\Resources\people-100.xlsx";
+
+        public ExcelReaderService ExcelReaderSvc { get; set; }
+        public CsvReaderService CsvReaderSvc { get; set; }
+        public ReaderRepository ReaderRepository { get; set; }
+        private UiService UiSvc { get; set; }
+
+        public ExcelReaderController(ExcelReaderService excelReader,
+            CsvReaderService csvReader,
+            ReaderRepository repository, 
+            UiService ui
+            )
         {
-            this.reader = reader;
-            this.repo = repo;
-            _ui = ui;
+            ExcelReaderSvc = excelReader;
+            CsvReaderSvc = csvReader;
+            ReaderRepository = repository;
+            UiSvc = ui;
             MapMenu();
         }
 
@@ -32,17 +43,19 @@ namespace ExcelReaderDynamic
             menuOptionMap.Add((int)MenuOptions.SpecifyFile, "Specify File");
             menuOptionMap.Add((int)MenuOptions.ImportDataFromFile, "Import data from file");
             menuOptionMap.Add((int)MenuOptions.ReadDatabase, "Read data from repository");
-            menuOptionMap.Add((int)MenuOptions.ExportDataToFile, "Export data from file");
+            menuOptionMap.Add((int)MenuOptions.ExportDataToFile, "Export data to file");
             menuOptionMap.Add((int)MenuOptions.Exit, "Exit the app");
         }
         public async Task Run()
         {
-            var input = _ui.GetMenuInput(menuOptionMap);
+            var input = UiSvc.GetMenuInput(menuOptionMap);
 
             while (input != (int)MenuOptions.Exit) 
             {
                 await ProcessUserChoice(input);
-                input = _ui.GetMenuInput(menuOptionMap);
+                Console.Clear();
+                input = UiSvc.GetMenuInput(menuOptionMap);
+                
             }
         }
 
@@ -53,44 +66,78 @@ namespace ExcelReaderDynamic
                 case (int)MenuOptions.SpecifyFile: ProcessSpecifyFile(); break;
                 case (int)MenuOptions.ImportDataFromFile: await ProcessImportDataFromFile(); break;
                 case (int)MenuOptions.ReadDatabase: await ProcessReadDatabase(); break;
-                case (int)MenuOptions.ExportDataToFile: break;
+                case (int)MenuOptions.ExportDataToFile: await ProcessExportDataToFile();  break;
             }
         }
         private void ProcessSpecifyFile()
         {
-            var path = _ui.GetFilePathFromUser();
-            //string path = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\people-100.xlsx";
-            reader.FilePath = path;
+            string path = UiSvc.GetFilePathFromUser();
+            
+            while (!File.Exists(path))
+            {
+                Console.WriteLine("File does not exist");
+                path = UiSvc.GetFilePathFromUser();
+            }
+
+            FilePath = path;
         }
         private async Task ProcessImportDataFromFile()
         {
-            if(reader.FilePath == string.Empty || !File.Exists(reader.FilePath))
+            if(FilePath == string.Empty || !File.Exists(FilePath))
             {
                 Console.WriteLine("File not specified or the path is invalid");
             }
-            Console.WriteLine("Reading Excel file");
-            var records = reader.ReadFile();
+
+            Console.WriteLine("Reading file");
+            var records = GetRecords();
+
+            if(records == null) 
+            {
+                // handle error
+                return;
+            }
+
             var headers = records[0].Headers;
 
             Console.WriteLine("Initialiazing DB");
-            await repo.InitializeDb();
+            await ReaderRepository.InitializeDb();
 
             Console.WriteLine("Creating table");
-            await repo.CreateTable(headers);
+            await ReaderRepository.CreateTable(headers);
 
             Console.WriteLine("Inserting records");
-            await repo.InsertBulk(records);
+            await ReaderRepository.InsertBulk(records);
 
             Console.WriteLine("Data successfully imported");
-            Console.WriteLine("Press any key to continue");
-            Console.ReadLine();
-            Console.Clear();
+
+            UiSvc.PressAnyKeyToContinue();
         }
 
+        private List<Record>? GetRecords()
+        {
+            string extension = Path.GetExtension(FilePath).ToLowerInvariant();
+
+            return extension switch
+            {
+                ".xlsx" => ExcelReaderSvc.ReadAllRecords(FilePath),
+                ".csv" => CsvReaderSvc.ReadAllRecords(FilePath),
+                _ => null
+            };
+        }
         private async Task ProcessReadDatabase()
         {
-            var recordsFromDB = await repo.GetAll();
-            _ui.PrintRecords(recordsFromDB);
+            var recordsFromDB = await ReaderRepository.GetAll();
+            UiSvc.PrintRecords(recordsFromDB);
+            
+        }
+        private async Task ProcessExportDataToFile()
+        {
+            string path = UiSvc.GetFilePathFromUser();
+
+            //overwrite logic
+            var recordsFromDB = await ReaderRepository.GetAll();
+            ExcelReaderSvc.WriteDatabase(path, recordsFromDB);
+            Console.WriteLine("e");
         }
     }
 }

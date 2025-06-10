@@ -6,13 +6,13 @@ using System.Reflection.PortableExecutable;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace ExcelReaderDynamic.Repository
 {
-    internal class ExcelReaderRepository
+    internal class ReaderRepository
     {
 
         private string _connectionStringMasterDb;
 
         private string _connectionStringExcelReaderDB;
-        public ExcelReaderRepository(IConfiguration config)
+        public ReaderRepository(IConfiguration config)
         {
             _connectionStringMasterDb = config.GetConnectionString("MasterDB") ?? string.Empty;
             _connectionStringExcelReaderDB = config.GetConnectionString("ExcelReaderDB") ?? string.Empty;
@@ -42,13 +42,7 @@ namespace ExcelReaderDynamic.Repository
             await ExecuteAsync(sql, _connectionStringMasterDb);
         }
 
-        public async Task ExecuteAsync(string sql, string connectionstring)
-        {
-
-            using var connection = new SqlConnection(connectionstring);
-
-            await connection.ExecuteAsync(sql);
-        }
+        
         public async Task CreateTable(List<string> headers)
         {
             string tableDefinition = "";
@@ -109,6 +103,13 @@ namespace ExcelReaderDynamic.Repository
                 records.Add(new Record {Headers = headers, Data = data ?? new List<string>()});
             }
             return records;
+        }
+        public async Task ExecuteAsync(string sql, string connectionstring)
+        {
+
+            using var connection = new SqlConnection(connectionstring);
+
+            await connection.ExecuteAsync(sql);
         }
 
 

@@ -1,96 +1,28 @@
 ﻿using OfficeOpenXml;
 using CsvHelper;
-using CsvHelper.Configuration;
 using System.Globalization;
-using System.Reflection.PortableExecutable;
+using Spectre.Console;
+using System.Net.WebSockets;
 
 namespace ExcelReaderDynamic.Services
 {
     internal class ExcelReaderService
     {
-        //public string FilePath { get; set; } = string.Empty;
-        public string FilePath = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\customers-100.csv";
 
-        private List<string> _headers = new();
-
-
-        public List<Record> ReadFile()
+        public List<Record> ReadAllRecords(string filePath)
         {
-            if (FilePath.EndsWith(".xlsx"))
-            {
-                return GetAllRecordsFromXlsx();
-            }
-            else if (FilePath.EndsWith(".csv"))
-            {
-                return GetAllRecordsFromCsv();
-            }
-            else
-            {
-                Console.WriteLine("Unsuported file type");
-                return new List<Record> { new Record() };
-            }
-        }
-        private List<Record> GetAllRecordsFromCsv()
-        {
-            using StreamReader reader = new StreamReader(FilePath);
-
-            using var csvreader = new CsvReader(reader, CultureInfo.InvariantCulture){};
-
-            csvreader.Read();
-            csvreader.ReadHeader();
-            _headers = csvreader.HeaderRecord.ToList() ?? new List<string>();
-
-            var records = new List<Record>();   
-            while (csvreader.Read()) 
-            {
-                var data = new List<string>();
-
-                foreach (var header in _headers)
-                {
-                    data.Add(csvreader.GetField(header));
-                }
-
-                records.Add(new Record
-                {
-                    Headers = _headers,
-                    Data = data
-                });
-            }
-
-            return records;
-
-            
-
-          
-
-            /*var lines = File.ReadAllLines(FilePath);
-
-            _headers = lines[0].Split(',').ToList();
-
-            List<Record> records = lines
-                .Skip(1)
-                .Select(line => new Record()
-                {
-                    Headers = _headers,
-                    Data = line.Split(',').ToList()
-                }).ToList();
-
-            return records;*/
-        }
-        private List<Record> GetAllRecordsFromXlsx()
-        {
-            using var package = new ExcelPackage(FilePath);
+            using var package = new ExcelPackage(filePath);
 
             var excelWorksheet = package.Workbook.Worksheets[0];
 
-            _headers = GetHeaders(excelWorksheet);
+            List<string> headers = GetHeaders(excelWorksheet);
             List<Record> records = new();
 
             for (int row = 2; row <= excelWorksheet.Dimension.Rows; row++)
             {
                 records.Add(new Record()
                 {
-                    Headers = _headers,
+                    Headers = headers,
                     Data = GetData(excelWorksheet, row),
                 });
             }
@@ -119,6 +51,43 @@ namespace ExcelReaderDynamic.Services
             }
 
             return data;
+        }
+
+        public void WriteDatabase(string filePath, List<Record> records)
+        {
+            using var package = new ExcelPackage();
+            var sheet = package.Workbook.Worksheets.Add("Data");
+
+            WriteHeaders(sheet, records[0].Headers);
+
+            int row = 2;
+
+            foreach (var record in records) 
+            {
+                WriteData(sheet, record.Data, row);
+                row++;
+            }
+            FileStream objFileStrm = File.Create(filePath);
+            objFileStrm.Close();
+
+            File.WriteAllBytes(filePath, package.GetAsByteArray());
+            Console.WriteLine("Done more");
+            Console.ReadKey();
+
+        }
+        public void WriteHeaders(ExcelWorksheet sheet, List<string> headers)
+        {
+            for (int i = 0; i < headers.Count; i++)
+            {
+                sheet.Cells[1, i+1].Value = headers[i];
+            }
+        }
+        public void WriteData(ExcelWorksheet sheet, List<string> data, int row)
+        {
+            for (int i = 0; i < data.Count; i++)
+            {
+                sheet.Cells[row, i+1].Value = data[i];
+            }
         }
     }
 }

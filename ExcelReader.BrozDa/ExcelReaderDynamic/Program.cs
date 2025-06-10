@@ -25,8 +25,6 @@ namespace ExcelReaderDynamic
 
         public static ServiceProvider BuildServices(ServiceCollection services)
         {
-            string excelFilePath = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\people-100.xlsx";
-
             var repoConfiguration = new ConfigurationBuilder()
                 .AddJsonFile(@"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\appconfig.json")
                 .Build();
@@ -34,7 +32,8 @@ namespace ExcelReaderDynamic
             services.AddSingleton<IConfiguration>(repoConfiguration);
 
             services.AddScoped<ExcelReaderService>();
-            services.AddScoped<ExcelReaderRepository>();
+            services.AddScoped<CsvReaderService>();
+            services.AddScoped<ReaderRepository>();
             services.AddScoped<UiService>();
             services.AddScoped<ExcelReaderController>();
             
