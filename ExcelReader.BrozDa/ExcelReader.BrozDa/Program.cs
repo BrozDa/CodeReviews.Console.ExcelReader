@@ -1,46 +1,46 @@
-﻿using ExcelReader.BrozDa.Data;
-using ExcelReader.BrozDa.Models;
-using ExcelReader.BrozDa.Services;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml;
+using ExcelReaderDynamic.Services;
+using ExcelReaderDynamic.Repository;
+using Microsoft.Extensions.Configuration;
 
-namespace ExcelReader.BrozDa
+namespace ExcelReaderDynamic
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
 
             ExcelPackage.License.SetNonCommercialPersonal("BrozDa");
 
             var services = new ServiceCollection();
 
+            var serviceProvider = BuildServices(services);
 
-            var sp = BuildServices(services);
+            var controller = serviceProvider.GetRequiredService<ExcelReaderController>();
 
-            var db = sp.GetRequiredService<ExcelReaderContext>();
-            db.Database.EnsureDeleted();
-            db.Database.EnsureCreated();
-
-            var controller = sp.GetRequiredService<ExcelReaderController>();
-
-            //controller.Run();
+            await controller.Run();
 
         }
+
         public static ServiceProvider BuildServices(ServiceCollection services)
         {
-            string path = Path.Combine(Environment.CurrentDirectory, "Resources/people-100.xlsx");
+            var repoConfiguration = new ConfigurationBuilder()
+                .AddJsonFile(@"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReader.Brozda\appconfig.json")
+                .Build();
 
-            services.AddDbContext<ExcelReaderContext>();
-            services.AddScoped<ExcelReadingService>(sp => new ExcelReadingService(path));
+            services.AddSingleton<IConfiguration>(repoConfiguration);
+
+            services.AddScoped<ExcelReaderService>();
+            services.AddScoped<CsvReaderService>();
+            services.AddScoped<ReaderRepository>();
             services.AddScoped<UiService>();
-            services.AddScoped<ExcelReaderController>(sp => new ExcelReaderController(
-                sp.GetRequiredService<ExcelReaderContext>(),
-                sp.GetRequiredService<ExcelReadingService>(),
-                sp.GetRequiredService<UiService>()
-                ));
+            services.AddScoped<ExcelReaderController>();
+            
 
-            return services.BuildServiceProvider();            
+            return services.BuildServiceProvider();
+
+        
         }
     }
 }
