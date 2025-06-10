@@ -18,7 +18,7 @@ namespace ExcelReaderDynamic
         public Dictionary<int, string> menuOptionMap = new();
 
         public string file = Environment.CurrentDirectory;
-        public string FilePath { get; set; } = @"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReaderDynamic\Resources\people-100.xlsx";
+        public string FilePath { get; set; }
 
         public ExcelReaderService ExcelReaderSvc { get; set; }
         public CsvReaderService CsvReaderSvc { get; set; }
@@ -48,6 +48,8 @@ namespace ExcelReaderDynamic
         }
         public async Task Run()
         {
+            await ReaderRepository.InitializeDb();
+
             var input = UiSvc.GetMenuInput(menuOptionMap);
 
             while (input != (int)MenuOptions.Exit) 
@@ -99,9 +101,6 @@ namespace ExcelReaderDynamic
 
             var headers = records[0].Headers;
 
-            Console.WriteLine("Initialiazing DB");
-            await ReaderRepository.InitializeDb();
-
             Console.WriteLine("Creating table");
             await ReaderRepository.CreateTable(headers);
 
@@ -131,12 +130,21 @@ namespace ExcelReaderDynamic
             
         }
         private async Task ProcessExportDataToFile()
+        
         {
             string path = UiSvc.GetFilePathFromUser();
-
+            
             //overwrite logic
             var recordsFromDB = await ReaderRepository.GetAll();
-            ExcelReaderSvc.WriteDatabase(path, recordsFromDB);
+
+            string extension = Path.GetExtension(path).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".xlsx": ExcelReaderSvc.WriteToFile(path, recordsFromDB); break;
+                case ".csv": CsvReaderSvc.WriteToFile(path, recordsFromDB); break;
+                default: break;
+            }
+            
             Console.WriteLine("e");
         }
     }

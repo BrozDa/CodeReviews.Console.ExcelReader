@@ -53,7 +53,7 @@ namespace ExcelReaderDynamic.Services
             return data;
         }
 
-        public void WriteDatabase(string filePath, List<Record> records)
+        public void WriteToFile(string filePath, List<Record> records)
         {
             using var package = new ExcelPackage();
             var sheet = package.Workbook.Worksheets.Add("Data");

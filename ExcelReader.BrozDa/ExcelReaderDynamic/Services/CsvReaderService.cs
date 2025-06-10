@@ -31,9 +31,27 @@ namespace ExcelReaderDynamic.Services
         }
         private List<string> GetHeaders(CsvReader reader) => reader.HeaderRecord?.ToList() ?? new List<string>();
 
-        public bool ImportDbToCsv(List<Record> records)
+        public void WriteToFile(string path, List<Record> records)
         {
-            throw new NotImplementedException();
+            using StreamWriter writer = new StreamWriter(path);
+            using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            foreach (var header in records[0].Headers)
+            {
+                csvWriter.WriteField(header);
+            }
+                
+            csvWriter.NextRecord();
+
+            foreach (var record in records)
+            {
+                foreach (var field in record.Data)
+                {
+                    csvWriter.WriteField(field);
+                }
+                csvWriter.NextRecord();
+            }
+
         }
     }
 }
