@@ -20,7 +20,6 @@ namespace ExcelReaderDynamic
             ReadDatabase,
             ExportDataToFile,
             Exit = 100
-
         }
 
         public Dictionary<int, string> menuOptionMap = new();
@@ -28,7 +27,7 @@ namespace ExcelReaderDynamic
 
         public ExcelReaderService ExcelReaderSvc { get; }
         public CsvReaderService CsvReaderSvc { get; }
-        public ReaderRepository ReaderRepository { get;}
+        public ReaderRepository ReaderRepository { get; }
         private UiService UiSvc { get; }
 
         /// <summary>
@@ -40,7 +39,7 @@ namespace ExcelReaderDynamic
         /// <param name="ui">An instance of <see cref="UiService"/></param>
         public ExcelReaderController(ExcelReaderService excelReader,
             CsvReaderService csvReader,
-            ReaderRepository repository, 
+            ReaderRepository repository,
             UiService ui
             )
         {
@@ -48,8 +47,8 @@ namespace ExcelReaderDynamic
             CsvReaderSvc = csvReader;
             ReaderRepository = repository;
             UiSvc = ui;
-            
         }
+
         /// <summary>
         /// Maps int representation of <see cref="MenuOptions"/> to its string representation
         /// </summary>
@@ -61,6 +60,7 @@ namespace ExcelReaderDynamic
             menuOptionMap.Add((int)MenuOptions.ExportDataToFile, AppStrings.Menu_ExportDataToFile);
             menuOptionMap.Add((int)MenuOptions.Exit, AppStrings.Menu_Exit);
         }
+
         /// <summary>
         /// Maps menu options, Initializes database and starts application flow
         /// </summary>
@@ -71,22 +71,22 @@ namespace ExcelReaderDynamic
 
             var isDbInitialized = await InitializeDb();
 
-            if (!isDbInitialized ) 
-            { 
+            if (!isDbInitialized)
+            {
                 Environment.Exit(-1);
             }
             UiSvc.ClearConsole();
 
             var input = UiSvc.GetMenuInput(menuOptionMap);
 
-            while (input != (int)MenuOptions.Exit) 
+            while (input != (int)MenuOptions.Exit)
             {
                 await ProcessUserChoice(input);
                 Console.Clear();
                 input = UiSvc.GetMenuInput(menuOptionMap);
-                
             }
         }
+
         /// <summary>
         /// Intializes the database, deleting the old one if it exists and creating a fresh and empty one
         /// </summary>
@@ -104,6 +104,7 @@ namespace ExcelReaderDynamic
             }
             return true;
         }
+
         /// <summary>
         /// Gets user choice and calls corespon
         /// </summary>
@@ -111,21 +112,25 @@ namespace ExcelReaderDynamic
         private async Task ProcessUserChoice(int choice)
         {
             switch (choice)
-            { 
-                case (int)MenuOptions.SpecifyFile: 
-                    ProcessSpecifyFile(); 
+            {
+                case (int)MenuOptions.SpecifyFile:
+                    ProcessSpecifyFile();
                     break;
-                case (int)MenuOptions.ImportDataFromFile: 
-                    await ProcessImportDataFromFile(); 
+
+                case (int)MenuOptions.ImportDataFromFile:
+                    await ProcessImportDataFromFile();
                     break;
-                case (int)MenuOptions.ReadDatabase: 
-                    await ProcessReadDatabase(); 
+
+                case (int)MenuOptions.ReadDatabase:
+                    await ProcessReadDatabase();
                     break;
-                case (int)MenuOptions.ExportDataToFile: 
-                    await ProcessExportDataToFile();  
+
+                case (int)MenuOptions.ExportDataToFile:
+                    await ProcessExportDataToFile();
                     break;
             }
         }
+
         /// <summary>
         /// Gets valid file from the user and stores it to FilePath property
         /// </summary>
@@ -140,8 +145,8 @@ namespace ExcelReaderDynamic
                 UiSvc.PrintText(AppStrings.Error_FileDoesNotExist);
                 UiSvc.PressAnyKeyToContinue();
             }
-           
         }
+
         /// <summary>
         /// Reads data from file and if the reading was successful insert retrieved data to the database
         /// </summary>
@@ -154,6 +159,7 @@ namespace ExcelReaderDynamic
 
             UiSvc.PressAnyKeyToContinue();
         }
+
         /// <summary>
         /// Creates table and inserts data to the new table
         /// </summary>
@@ -162,13 +168,11 @@ namespace ExcelReaderDynamic
         {
             var headers = records[0].Headers;
 
-
             UiSvc.PrintText(AppStrings.Status_CreatingTable);
             var createTableResult = await ReaderRepository.CreateTable(headers);
 
             if (!createTableResult.IsSuccessful)
             {
-
                 UiSvc.PrintErrorMsg(createTableResult.ErrorMessage);
                 return;
             }
@@ -185,6 +189,7 @@ namespace ExcelReaderDynamic
 
             UiSvc.PrintText(AppStrings.Status_DbPopulated);
         }
+
         /// <summary>
         /// Checks if path stored in FilePath property is valid and if so, retrieves data from the file
         /// </summary>
@@ -204,11 +209,11 @@ namespace ExcelReaderDynamic
                 return null;
             }
 
-
             UiSvc.PrintText(AppStrings.Status_ReadingFile);
 
             return GetRecords();
         }
+
         /// <summary>
         /// Checks file extensions and calls respective service to read data from the file
         /// </summary>
@@ -231,13 +236,13 @@ namespace ExcelReaderDynamic
             {
                 return result.Data;
             }
-            else 
+            else
             {
                 UiSvc.PrintErrorMsg(result.ErrorMessage);
                 return null;
             }
-
         }
+
         /// <summary>
         /// Retrieves data from the database. Data is printed to the output if data is sucessfully retrieved.
         /// Respective error message is shown otherwise
@@ -253,14 +258,14 @@ namespace ExcelReaderDynamic
             }
 
             UiSvc.PrintRecords(readDbResult.Data!);
-            
         }
+
         /// <summary>
         /// Gets path where file should be created, gets confirmation of overwritting and writes data from database to the file
         /// Respective error message is shown in case of any issue.
         /// </summary>
         private async Task ProcessExportDataToFile()
-        
+
         {
             string path = UiSvc.GetFilePathFromUser();
 
@@ -276,7 +281,7 @@ namespace ExcelReaderDynamic
 
             if (!readDbResult.IsSuccessful)
             {
-                UiSvc.PrintText(readDbResult.ErrorMessage);
+                UiSvc.PrintErrorMsg(readDbResult.ErrorMessage);
                 UiSvc.PressAnyKeyToContinue();
                 return;
             }
@@ -286,17 +291,18 @@ namespace ExcelReaderDynamic
             {
                 case ".xlsx":
                     UiSvc.PrintText(AppStrings.Status_WritingToFile);
-                    ExcelReaderSvc.WriteToFile(path, readDbResult.Data!); 
+                    ExcelReaderSvc.WriteToFile(path, readDbResult.Data!);
                     break;
+
                 case ".csv":
                     UiSvc.PrintText(AppStrings.Status_WritingToFile);
-                    CsvReaderSvc.WriteToFile(path, readDbResult.Data!); 
+                    CsvReaderSvc.WriteToFile(path, readDbResult.Data!);
                     break;
+
                 default: break;
             }
             UiSvc.PrintText(AppStrings.Status_WritingToFileFinished);
             UiSvc.PressAnyKeyToContinue();
-
         }
     }
 }

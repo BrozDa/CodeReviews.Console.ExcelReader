@@ -1,7 +1,6 @@
 ﻿using ExcelReader.Brozda.Helpers;
 using Spectre.Console;
 
-
 namespace ExcelReaderDynamic.Services
 {
     /// <summary>
@@ -16,8 +15,9 @@ namespace ExcelReaderDynamic.Services
         {
             Console.WriteLine();
             Console.WriteLine(AppStrings.Io_PressAnyKeyToContinue);
-            Console.ReadKey(); 
+            Console.ReadKey();
         }
+
         /// <summary>
         /// Clears existing output from the console
         /// </summary>
@@ -25,6 +25,7 @@ namespace ExcelReaderDynamic.Services
         {
             Console.Clear();
         }
+
         /// <summary>
         /// Prints out the error message to the output and awaits user input
         /// </summary>
@@ -34,6 +35,7 @@ namespace ExcelReaderDynamic.Services
             Console.WriteLine(errorMsg ?? AppStrings.Io_UnspecifiedError);
             PressAnyKeyToContinue();
         }
+
         /// <summary>
         /// Prints text to the output
         /// </summary>
@@ -42,6 +44,7 @@ namespace ExcelReaderDynamic.Services
         {
             Console.WriteLine(text);
         }
+
         /// <summary>
         /// Prints out the menu and gets user choice
         /// </summary>
@@ -57,6 +60,7 @@ namespace ExcelReaderDynamic.Services
 
             return input;
         }
+
         /// <summary>
         /// Prints out record to the output
         /// </summary>
@@ -66,14 +70,15 @@ namespace ExcelReaderDynamic.Services
             var table = new Table();
 
             table.AddColumns(records[0].Headers.ToArray());
-            foreach (var record in records) 
-            { 
+            foreach (var record in records)
+            {
                 table.AddRow(record.Data.ToArray());
             }
 
             AnsiConsole.Write(table);
             PressAnyKeyToContinue();
         }
+
         /// <summary>
         /// Gets a string representing the file path from the user
         /// </summary>
@@ -86,6 +91,7 @@ namespace ExcelReaderDynamic.Services
 
             return input;
         }
+
         /// <summary>
         /// Gets confirmation from user to agree/ deny overwriting of the file
         /// </summary>
@@ -100,8 +106,6 @@ namespace ExcelReaderDynamic.Services
                 );
 
             return input;
-
         }
-
     }
 }

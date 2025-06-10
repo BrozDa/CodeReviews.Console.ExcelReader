@@ -23,6 +23,7 @@
                 Data = data
             };
         }
+
         /// <summary>
         /// Gets failed <see cref="ReadingResult{T}"/>
         /// </summary>
@@ -37,6 +38,4 @@
             };
         }
     }
-
-    
 }

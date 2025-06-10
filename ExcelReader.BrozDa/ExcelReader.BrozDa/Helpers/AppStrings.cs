@@ -14,7 +14,7 @@
         public const string Status_InitializingDb = "Initializing database";
         public const string Status_ReadingFile = "Reading File";
         public const string Status_CreatingTable = "Creating table";
-        public const string Status_PopulatingDb= "Inserting records to database";
+        public const string Status_PopulatingDb = "Inserting records to database";
         public const string Status_DbPopulated = "Data successfully imported to database";
         public const string Status_OperationCancelled = "Operation Cancelled";
         public const string Status_GettingRecordsFromDb = "Reading database";

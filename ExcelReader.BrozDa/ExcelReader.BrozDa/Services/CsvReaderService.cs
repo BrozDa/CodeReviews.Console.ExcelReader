@@ -27,7 +27,6 @@ namespace ExcelReaderDynamic.Services
                 csvReader.Read();
                 csvReader.ReadHeader();
 
-
                 List<string> headers = GetHeaders(csvReader);
                 List<Record> records = new();
 
@@ -46,14 +45,15 @@ namespace ExcelReaderDynamic.Services
             {
                 return ReadingResult<List<Record>>.Fail($"Error while reading the file: {ex.Message}");
             }
-
         }
+
         /// <summary>
         /// Retrieves column headers from CSV file
         /// </summary>
         /// <param name="reader">A <see cref="CsvReader"/> used to read the file</param>
         /// <returns>A list of <see cref="string"/> containing headers from file</returns>
         private List<string> GetHeaders(CsvReader reader) => reader.HeaderRecord?.ToList() ?? new List<string>();
+
         /// <summary>
         /// Writes data to file in csv format
         /// </summary>
@@ -90,8 +90,6 @@ namespace ExcelReaderDynamic.Services
             {
                 return ReadingResult<bool>.Fail($"Error while writing to file: {ex.Message}");
             }
-
-
         }
     }
 }

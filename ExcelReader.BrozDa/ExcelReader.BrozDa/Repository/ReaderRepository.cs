@@ -11,7 +11,6 @@ namespace ExcelReaderDynamic.Repository
     /// </summary>
     internal class ReaderRepository
     {
-
         private string _connectionStringMasterDb;
 
         private string _connectionStringExcelReaderDB;
@@ -27,6 +26,7 @@ namespace ExcelReaderDynamic.Repository
             _connectionStringMasterDb = config.GetConnectionString("MasterDB") ?? string.Empty;
             _connectionStringExcelReaderDB = config.GetConnectionString("ExcelReaderDB") ?? string.Empty;
         }
+
         /// <summary>
         /// Initializes database - make sure the old DB is deleted (if it existed) ad created new one
         /// </summary>
@@ -36,16 +36,17 @@ namespace ExcelReaderDynamic.Repository
             var deleteResult = await EnsureDeleted();
             var createResult = await EnsureCreated();
 
-            return new RepositoryResult<bool>() 
-            { 
-                IsSuccessful = deleteResult.IsSuccessful && createResult.IsSuccessful 
+            return new RepositoryResult<bool>()
+            {
+                IsSuccessful = deleteResult.IsSuccessful && createResult.IsSuccessful
             };
         }
+
         /// <summary>
         /// Ensures that old database for data read from file is deleted.
         /// </summary>
         /// <returns>A Task result contains <see cref="ReadingResult{T}"/> indicating whether the database was deleted successfully </returns>
-        public async Task<RepositoryResult<bool>> EnsureDeleted() 
+        public async Task<RepositoryResult<bool>> EnsureDeleted()
         {
             var sql = @"IF EXISTS(SELECT * FROM sys.databases WHERE name = 'ExcelReaderDynamic')
                        BEGIN
@@ -55,11 +56,12 @@ namespace ExcelReaderDynamic.Repository
 
             return await ExecuteAsync(sql, _connectionStringMasterDb);
         }
+
         /// <summary>
         /// Ensures that new database for data read from file is created.
         /// </summary>
         /// <returns>A Task result contains <see cref="ReadingResult{T}"/> indicating whether the database was created successfully </returns>
-        public async Task<RepositoryResult<bool>> EnsureCreated() 
+        public async Task<RepositoryResult<bool>> EnsureCreated()
         {
             var sql = @"IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'ExcelReaderDynamic')
                        BEGIN
@@ -76,7 +78,6 @@ namespace ExcelReaderDynamic.Repository
         /// <returns>A Task result contains <see cref="ReadingResult{T}"/> indicating whether the table was created successfully </returns>
         public async Task<RepositoryResult<bool>> CreateTable(List<string> headers)
         {
-
             string tableDefinition = "";
             foreach (var header in headers)
             {
@@ -86,14 +87,13 @@ namespace ExcelReaderDynamic.Repository
             string sql = @$"CREATE TABLE [ExcelData] ({tableDefinition});";
 
             return await ExecuteAsync(sql, _connectionStringExcelReaderDB);
-
         }
 
         /// <summary>
         /// Inserts list of records to the database
         /// </summary>
         /// <param name="records">A list of <see cref="Record"/> to be inserted</param>
-        /// <returns>A Task result contains <see cref="ReadingResult{T}"/> indicating whether records were successfully inserted</returns>        
+        /// <returns>A Task result contains <see cref="ReadingResult{T}"/> indicating whether records were successfully inserted</returns>
         public async Task<RepositoryResult<bool>> InsertBulk(List<Record> records)
         {
             try
@@ -116,18 +116,17 @@ namespace ExcelReaderDynamic.Repository
                         sqlParameters.Add($"@{normalizedHeaders[i]}", record.Data[i]);
                     }
 
-                    int affectedRows = await connection.ExecuteAsync(sql, sqlParameters);
+                    await connection.ExecuteAsync(sql, sqlParameters);
                 }
 
                 return RepositoryResult<bool>.NonQuerrrySuccess();
-
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return RepositoryResult<bool>.NonQuerrryFail($"Error while accessing database: {ex.Message}");
             }
-            
         }
+
         /// <summary>
         /// Retrieves all records stored in the database
         /// </summary>
@@ -141,7 +140,6 @@ namespace ExcelReaderDynamic.Repository
 
                 var rows = await connection.QueryAsync(sql);
 
-                
                 var recordList = MapDynamicToRecord(rows);
 
                 return new RepositoryResult<List<Record>>()
@@ -150,7 +148,7 @@ namespace ExcelReaderDynamic.Repository
                     Data = recordList
                 };
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return new RepositoryResult<List<Record>>()
                 {
@@ -158,8 +156,8 @@ namespace ExcelReaderDynamic.Repository
                     ErrorMessage = $"Error while accessing database: {ex.Message}"
                 };
             }
-            
         }
+
         /// <summary>
         /// Maps dynamic records retrieved from database to <see cref="Record"/> objects
         /// </summary>
@@ -168,17 +166,18 @@ namespace ExcelReaderDynamic.Repository
         private List<Record> MapDynamicToRecord(IEnumerable<dynamic> dataFromDb)
         {
             List<Record> records = new();
-            foreach (dynamic dataRow in dataFromDb) 
+            foreach (dynamic dataRow in dataFromDb)
             {
                 var dict = (IDictionary<string, object>)dataRow;
 
                 var headers = dict.Keys.ToList();
                 var data = dict.Values.Select(v => v.ToString() ?? string.Empty).ToList();
 
-                records.Add(new Record {Headers = headers, Data = data ?? new List<string>()});
+                records.Add(new Record { Headers = headers, Data = data ?? new List<string>() });
             }
             return records;
         }
+
         /// <summary>
         /// Executes a SQL command passed againt database based on connection string
         /// </summary>
@@ -194,18 +193,10 @@ namespace ExcelReaderDynamic.Repository
 
                 return RepositoryResult<bool>.NonQuerrrySuccess();
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return RepositoryResult<bool>.NonQuerrryFail($"Error while accessing database: {ex.Message}");
             }
-                
- 
         }
-
-
-
     }
-
-    
-
 }

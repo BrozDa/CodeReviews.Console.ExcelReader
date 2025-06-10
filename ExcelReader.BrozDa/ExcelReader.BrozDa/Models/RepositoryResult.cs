@@ -17,8 +17,8 @@
         public static RepositoryResult<bool> NonQuerrrySuccess()
         {
             return new RepositoryResult<bool> { IsSuccessful = true };
-
         }
+
         /// <summary>
         /// Gets a failed <see cref="RepositoryResult{T}"/> for non-querry operation
         /// </summary>
@@ -26,9 +26,7 @@
         /// <returns>A <see cref="RepositoryResult{T}"/> indicating failed repository operation</returns>
         public static RepositoryResult<bool> NonQuerrryFail(string errorMessage)
         {
-            return new RepositoryResult<bool> { IsSuccessful = true, ErrorMessage = errorMessage};
+            return new RepositoryResult<bool> { IsSuccessful = true, ErrorMessage = errorMessage };
         }
     }
-
-    
 }

@@ -1,16 +1,15 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using OfficeOpenXml;
+﻿using ExcelReaderDynamic.Repository;
 using ExcelReaderDynamic.Services;
-using ExcelReaderDynamic.Repository;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OfficeOpenXml;
 
 namespace ExcelReaderDynamic
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
-
             ExcelPackage.License.SetNonCommercialPersonal("BrozDa");
 
             var services = new ServiceCollection();
@@ -20,13 +19,12 @@ namespace ExcelReaderDynamic
             var controller = serviceProvider.GetRequiredService<ExcelReaderController>();
 
             await controller.Run();
-
         }
 
         public static ServiceProvider BuildServices(ServiceCollection services)
         {
             var repoConfiguration = new ConfigurationBuilder()
-                .AddJsonFile(Path.Combine(Environment.CurrentDirectory,"appconfig.json"))
+                .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "appconfig.json"))
                 .Build();
 
             services.AddSingleton<IConfiguration>(repoConfiguration);
@@ -36,11 +34,8 @@ namespace ExcelReaderDynamic
             services.AddScoped<ReaderRepository>();
             services.AddScoped<UiService>();
             services.AddScoped<ExcelReaderController>();
-            
 
             return services.BuildServiceProvider();
-
-        
         }
     }
 }

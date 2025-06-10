@@ -1,5 +1,5 @@
-﻿using OfficeOpenXml;
-using ExcelReader.Brozda.Models;
+﻿using ExcelReader.Brozda.Models;
+using OfficeOpenXml;
 
 namespace ExcelReaderDynamic.Services
 {
@@ -35,15 +35,14 @@ namespace ExcelReaderDynamic.Services
                     });
                 }
 
-                return ReadingResult<List<Record>>.Success(records); 
+                return ReadingResult<List<Record>>.Success(records);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return ReadingResult<List<Record>>.Fail($"Error while reading the file: {ex.Message}");
             }
-            
-
         }
+
         /// <summary>
         /// Retrieves column headers from XLSX file
         /// </summary>
@@ -77,6 +76,7 @@ namespace ExcelReaderDynamic.Services
 
             return data;
         }
+
         /// <summary>
         /// Writes data to file in xlsx format
         /// </summary>
@@ -105,13 +105,12 @@ namespace ExcelReaderDynamic.Services
 
                 return ReadingResult<bool>.Success(true);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return ReadingResult<bool>.Fail($"Error while writing to file: {ex.Message}");
             }
-            
-
         }
+
         /// <summary>
         /// Writes headers to the excel file
         /// </summary>
@@ -121,7 +120,7 @@ namespace ExcelReaderDynamic.Services
         {
             for (int i = 0; i < headers.Count; i++)
             {
-                sheet.Cells[1, i+1].Value = headers[i];
+                sheet.Cells[1, i + 1].Value = headers[i];
             }
         }
 
@@ -135,7 +134,7 @@ namespace ExcelReaderDynamic.Services
         {
             for (int i = 0; i < data.Count; i++)
             {
-                sheet.Cells[row, i+1].Value = data[i];
+                sheet.Cells[row, i + 1].Value = data[i];
             }
         }
     }
