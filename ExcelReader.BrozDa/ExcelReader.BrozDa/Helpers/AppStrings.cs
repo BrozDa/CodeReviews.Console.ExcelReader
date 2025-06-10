@@ -1,5 +1,8 @@
 ﻿namespace ExcelReader.Brozda.Helpers
 {
+    /// <summary>
+    /// Represents strings used by the application
+    /// </summary>
     internal static class AppStrings
     {
         public const string Menu_SpecifyFile = "Specify File";
@@ -20,5 +23,8 @@
 
         public const string Error_PathNotSpecified = "Path not specified";
         public const string Error_FileDoesNotExist = "Path invalid, File does not exist";
+
+        public const string Io_PressAnyKeyToContinue = "Press any key to continue...";
+        public const string Io_UnspecifiedError = "Unknown Error";
     }
 }

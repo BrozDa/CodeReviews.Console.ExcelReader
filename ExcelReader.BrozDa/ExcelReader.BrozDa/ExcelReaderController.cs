@@ -2,13 +2,17 @@
 using ExcelReader.Brozda.Models;
 using ExcelReaderDynamic.Repository;
 using ExcelReaderDynamic.Services;
-using Spectre.Console;
-using System.IO;
 
 namespace ExcelReaderDynamic
 {
+    /// <summary>
+    /// Handles Excel/ CSV reader application flow
+    /// </summary>
     internal class ExcelReaderController
     {
+        /// <summary>
+        /// Represents menu options
+        /// </summary>
         public enum MenuOptions
         {
             SpecifyFile = 1,
@@ -27,6 +31,13 @@ namespace ExcelReaderDynamic
         public ReaderRepository ReaderRepository { get;}
         private UiService UiSvc { get; }
 
+        /// <summary>
+        /// Intializes new instance of <see cref="ExcelReaderController"/>
+        /// </summary>
+        /// <param name="excelReader">An instance of <see cref="ExcelReaderService"/></param>
+        /// <param name="csvReader">An instance of <see cref="CsvReaderService"/></param>
+        /// <param name="repository">An instance of <see cref="ExcelReaderDynamic.Repository.ReaderRepository"/></param>
+        /// <param name="ui">An instance of <see cref="UiService"/></param>
         public ExcelReaderController(ExcelReaderService excelReader,
             CsvReaderService csvReader,
             ReaderRepository repository, 
@@ -37,9 +48,11 @@ namespace ExcelReaderDynamic
             CsvReaderSvc = csvReader;
             ReaderRepository = repository;
             UiSvc = ui;
-            MapMenu();
+            
         }
-
+        /// <summary>
+        /// Maps int representation of <see cref="MenuOptions"/> to its string representation
+        /// </summary>
         private void MapMenu()
         {
             menuOptionMap.Add((int)MenuOptions.SpecifyFile, AppStrings.Menu_SpecifyFile);
@@ -48,8 +61,14 @@ namespace ExcelReaderDynamic
             menuOptionMap.Add((int)MenuOptions.ExportDataToFile, AppStrings.Menu_ExportDataToFile);
             menuOptionMap.Add((int)MenuOptions.Exit, AppStrings.Menu_Exit);
         }
+        /// <summary>
+        /// Maps menu options, Initializes database and starts application flow
+        /// </summary>
+        /// <returns></returns>
         public async Task Run()
         {
+            MapMenu();
+
             var isDbInitialized = await InitializeDb();
 
             if (!isDbInitialized ) 
@@ -68,6 +87,10 @@ namespace ExcelReaderDynamic
                 
             }
         }
+        /// <summary>
+        /// Intializes the database, deleting the old one if it exists and creating a fresh and empty one
+        /// </summary>
+        /// <returns>A Task result contains <see cref="bool"/> indicating success or fail</returns>
         private async Task<bool> InitializeDb()
         {
             UiSvc.PrintText(AppStrings.Status_InitializingDb);
@@ -81,7 +104,10 @@ namespace ExcelReaderDynamic
             }
             return true;
         }
-
+        /// <summary>
+        /// Gets user choice and calls corespon
+        /// </summary>
+        /// <param name="choice">An int representation of <see cref="MenuOptions"/></param>
         private async Task ProcessUserChoice(int choice)
         {
             switch (choice)
@@ -100,6 +126,9 @@ namespace ExcelReaderDynamic
                     break;
             }
         }
+        /// <summary>
+        /// Gets valid file from the user and stores it to FilePath property
+        /// </summary>
         private void ProcessSpecifyFile()
         {
             string path = UiSvc.GetFilePathFromUser();
@@ -113,6 +142,9 @@ namespace ExcelReaderDynamic
             }
            
         }
+        /// <summary>
+        /// Reads data from file and if the reading was successful insert retrieved data to the database
+        /// </summary>
         private async Task ProcessImportDataFromFile()
         {
             var records = GetDataFromFile();
@@ -122,6 +154,10 @@ namespace ExcelReaderDynamic
 
             UiSvc.PressAnyKeyToContinue();
         }
+        /// <summary>
+        /// Creates table and inserts data to the new table
+        /// </summary>
+        /// <param name="records">A list of <see cref="Record"/> to be inserted</param>
         private async Task PopulateDatabase(List<Record> records)
         {
             var headers = records[0].Headers;
@@ -129,6 +165,7 @@ namespace ExcelReaderDynamic
 
             UiSvc.PrintText(AppStrings.Status_CreatingTable);
             var createTableResult = await ReaderRepository.CreateTable(headers);
+
             if (!createTableResult.IsSuccessful)
             {
 
@@ -137,6 +174,7 @@ namespace ExcelReaderDynamic
             }
 
             UiSvc.PrintText(AppStrings.Status_PopulatingDb);
+
             var insertResult = await ReaderRepository.InsertBulk(records);
 
             if (!insertResult.IsSuccessful)
@@ -147,7 +185,10 @@ namespace ExcelReaderDynamic
 
             UiSvc.PrintText(AppStrings.Status_DbPopulated);
         }
-
+        /// <summary>
+        /// Checks if path stored in FilePath property is valid and if so, retrieves data from the file
+        /// </summary>
+        /// <returns></returns>
         private List<Record>? GetDataFromFile()
         {
             if (FilePath == string.Empty)
@@ -166,11 +207,13 @@ namespace ExcelReaderDynamic
 
             UiSvc.PrintText(AppStrings.Status_ReadingFile);
 
-            var records = GetRecords();
-
-
-            return records;
+            return GetRecords();
         }
+        /// <summary>
+        /// Checks file extensions and calls respective service to read data from the file
+        /// </summary>
+        /// <returns>A list of <see cref="Record"/> retrieved from file.
+        /// Error message is printed in case of any error and null is returned</returns>
         private List<Record>? GetRecords()
         {
             string extension = Path.GetExtension(FilePath).ToLowerInvariant();
@@ -195,6 +238,10 @@ namespace ExcelReaderDynamic
             }
 
         }
+        /// <summary>
+        /// Retrieves data from the database. Data is printed to the output if data is sucessfully retrieved.
+        /// Respective error message is shown otherwise
+        /// </summary>
         private async Task ProcessReadDatabase()
         {
             var readDbResult = await ReaderRepository.GetAll();
@@ -208,12 +255,15 @@ namespace ExcelReaderDynamic
             UiSvc.PrintRecords(readDbResult.Data!);
             
         }
+        /// <summary>
+        /// Gets path where file should be created, gets confirmation of overwritting and writes data from database to the file
+        /// Respective error message is shown in case of any issue.
+        /// </summary>
         private async Task ProcessExportDataToFile()
         
         {
             string path = UiSvc.GetFilePathFromUser();
 
-            //overwrite logic
             if (File.Exists(path) && !UiSvc.ConfirmOverwrite())
             {
                 UiSvc.PrintText(AppStrings.Status_OperationCancelled);
