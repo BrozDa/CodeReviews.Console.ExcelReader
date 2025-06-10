@@ -1,33 +1,38 @@
 ﻿using OfficeOpenXml;
-using CsvHelper;
-using System.Globalization;
-using Spectre.Console;
-using System.Net.WebSockets;
+using ExcelReader.Brozda.Models;
 
 namespace ExcelReaderDynamic.Services
 {
     internal class ExcelReaderService
     {
 
-        public List<Record> ReadAllRecords(string filePath)
+        public ReadingResult<List<Record>> ReadAllRecords(string filePath)
         {
-            using var package = new ExcelPackage(filePath);
-
-            var excelWorksheet = package.Workbook.Worksheets[0];
-
-            List<string> headers = GetHeaders(excelWorksheet);
-            List<Record> records = new();
-
-            for (int row = 2; row <= excelWorksheet.Dimension.Rows; row++)
+            try
             {
-                records.Add(new Record()
-                {
-                    Headers = headers,
-                    Data = GetData(excelWorksheet, row),
-                });
-            }
+                using var package = new ExcelPackage(filePath);
 
-            return records;
+                var excelWorksheet = package.Workbook.Worksheets[0];
+
+                List<string> headers = GetHeaders(excelWorksheet);
+                List<Record> records = new();
+
+                for (int row = 2; row <= excelWorksheet.Dimension.Rows; row++)
+                {
+                    records.Add(new Record()
+                    {
+                        Headers = headers,
+                        Data = GetData(excelWorksheet, row),
+                    });
+                }
+
+                return ReadingResult<List<Record>>.Success(records); 
+            }
+            catch (Exception ex) 
+            {
+                return ReadingResult<List<Record>>.Fail($"Error while reading the file: {ex.Message}");
+            }
+            
 
         }
         private List<string> GetHeaders(ExcelWorksheet sheet)
@@ -53,36 +58,42 @@ namespace ExcelReaderDynamic.Services
             return data;
         }
 
-        public void WriteToFile(string filePath, List<Record> records)
+        public ReadingResult<bool> WriteToFile(string filePath, List<Record> records)
         {
-            using var package = new ExcelPackage();
-            var sheet = package.Workbook.Worksheets.Add("Data");
-
-            WriteHeaders(sheet, records[0].Headers);
-
-            int row = 2;
-
-            foreach (var record in records) 
+            try
             {
-                WriteData(sheet, record.Data, row);
-                row++;
-            }
-            FileStream objFileStrm = File.Create(filePath);
-            objFileStrm.Close();
+                using var package = new ExcelPackage();
+                var sheet = package.Workbook.Worksheets.Add("Data");
 
-            File.WriteAllBytes(filePath, package.GetAsByteArray());
-            Console.WriteLine("Done more");
-            Console.ReadKey();
+                WriteHeaders(sheet, records[0].Headers);
+
+                int row = 2;
+
+                foreach (var record in records)
+                {
+                    WriteData(sheet, record.Data, row);
+                    row++;
+                }
+
+                package.SaveAs(filePath);
+
+                return ReadingResult<bool>.Success(true);
+            }
+            catch (Exception ex) 
+            {
+                return ReadingResult<bool>.Fail($"Error while writing to file: {ex.Message}");
+            }
+            
 
         }
-        public void WriteHeaders(ExcelWorksheet sheet, List<string> headers)
+        private void WriteHeaders(ExcelWorksheet sheet, List<string> headers)
         {
             for (int i = 0; i < headers.Count; i++)
             {
                 sheet.Cells[1, i+1].Value = headers[i];
             }
         }
-        public void WriteData(ExcelWorksheet sheet, List<string> data, int row)
+        private void WriteData(ExcelWorksheet sheet, List<string> data, int row)
         {
             for (int i = 0; i < data.Count; i++)
             {

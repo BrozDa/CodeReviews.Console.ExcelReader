@@ -15,6 +15,15 @@ namespace ExcelReaderDynamic.Services
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey(); 
         }
+        public void ClearConsole()
+        {
+            Console.Clear();
+        }
+        public void PrintErrorMsg(string errorMsg)
+        {
+            Console.WriteLine(errorMsg);
+            PressAnyKeyToContinue();
+        }
         public int GetMenuInput(Dictionary<int, string> menuOptionMap)
         {
             var input = AnsiConsole.Prompt(
@@ -44,6 +53,18 @@ namespace ExcelReaderDynamic.Services
                 );
 
             return input;
+        }
+        public bool ConfirmOverwrite()
+        {
+            var input = AnsiConsole.Prompt(
+                new SelectionPrompt<bool>()
+                .Title("\nFile already exists. Please confirm the operation")
+                .AddChoices(true, false)
+                .UseConverter(x => x == true ? "Confirm" : "Cancel")
+                );
+
+            return input;
+
         }
 
     }

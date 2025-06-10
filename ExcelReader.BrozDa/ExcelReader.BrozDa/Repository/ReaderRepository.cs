@@ -1,7 +1,9 @@
 ﻿using Dapper;
+using ExcelReader.Brozda.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Spectre.Console;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace ExcelReaderDynamic.Repository
@@ -17,12 +19,17 @@ namespace ExcelReaderDynamic.Repository
             _connectionStringMasterDb = config.GetConnectionString("MasterDB") ?? string.Empty;
             _connectionStringExcelReaderDB = config.GetConnectionString("ExcelReaderDB") ?? string.Empty;
         }
-        public async Task InitializeDb()
+        public async Task<RepositoryResult<bool>> InitializeDb()
         {
-            await EnsureDeleted();
-            await EnsureCreated();  
+            var deleteResult = await EnsureDeleted();
+            var createResult = await EnsureCreated();
+
+            return new RepositoryResult<bool>() 
+            { 
+                IsSuccessful = deleteResult.IsSuccessful && createResult.IsSuccessful 
+            };
         }
-        public async Task EnsureDeleted() 
+        public async Task<RepositoryResult<bool>> EnsureDeleted() 
         {
             var sql = @"IF EXISTS(SELECT * FROM sys.databases WHERE name = 'ExcelReaderDynamic')
                        BEGIN
@@ -30,21 +37,22 @@ namespace ExcelReaderDynamic.Repository
                         DROP DATABASE [ExcelReaderDynamic];
                        END";
 
-            await ExecuteAsync(sql, _connectionStringMasterDb);
+            return await ExecuteAsync(sql, _connectionStringMasterDb);
         }
-        public async Task EnsureCreated() 
+        public async Task<RepositoryResult<bool>> EnsureCreated() 
         {
             var sql = @"IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = 'ExcelReaderDynamic')
                        BEGIN
                         CREATE DATABASE ExcelReaderDynamic
                        END";
 
-            await ExecuteAsync(sql, _connectionStringMasterDb);
+            return await ExecuteAsync(sql, _connectionStringMasterDb);
         }
 
-        
-        public async Task CreateTable(List<string> headers)
+
+        public async Task<RepositoryResult<bool>> CreateTable(List<string> headers)
         {
+
             string tableDefinition = "";
             foreach (var header in headers)
             {
@@ -53,41 +61,73 @@ namespace ExcelReaderDynamic.Repository
             tableDefinition = tableDefinition.TrimEnd(',');
             string sql = @$"CREATE TABLE [ExcelData] ({tableDefinition});";
 
-            await ExecuteAsync(sql, _connectionStringExcelReaderDB);
+            return await ExecuteAsync(sql, _connectionStringExcelReaderDB);
+
         }
-        public async Task InsertBulk(List<Record> records)
+            
+            
+        public async Task<RepositoryResult<bool>> InsertBulk(List<Record> records)
         {
-            using var connection = new SqlConnection(_connectionStringExcelReaderDB);
-
-            var headers = records[0].Headers;
-            var normalizedHeaders = headers.Select(x => $"{x.Replace(" ", "")}").ToList();
-
-            var columnsString = string.Join(",", headers.Select(x => $"[{x}]"));
-            var parametersString = string.Join(",", normalizedHeaders.Select(x => $"@{x}"));
-
-            string sql = @$"INSERT INTO [ExcelData] ({columnsString}) VALUES ({parametersString});";
-
-            foreach (var record in records)
+            try
             {
-                var sqlParameters = new DynamicParameters();
-                for (int i = 0; i < headers.Count; i++)
+                using var connection = new SqlConnection(_connectionStringExcelReaderDB);
+
+                var headers = records[0].Headers;
+                var normalizedHeaders = headers.Select(x => $"{x.Replace(" ", "")}").ToList();
+
+                var columnsString = string.Join(",", headers.Select(x => $"[{x}]"));
+                var parametersString = string.Join(",", normalizedHeaders.Select(x => $"@{x}"));
+
+                string sql = @$"INSERT INTO [ExcelData] ({columnsString}) VALUES ({parametersString});";
+
+                foreach (var record in records)
                 {
-                    sqlParameters.Add($"@{normalizedHeaders[i]}", record.Data[i]);
+                    var sqlParameters = new DynamicParameters();
+                    for (int i = 0; i < headers.Count; i++)
+                    {
+                        sqlParameters.Add($"@{normalizedHeaders[i]}", record.Data[i]);
+                    }
+
+                    int affectedRows = await connection.ExecuteAsync(sql, sqlParameters);
                 }
 
-                await connection.ExecuteAsync(sql, sqlParameters);
+                return RepositoryResult<bool>.NonQuerrrySuccess();
+
             }
+            catch (Exception ex) 
+            {
+                return RepositoryResult<bool>.NonQuerrryFail($"Error while accessing database: {ex.Message}");
+            }
+            
         }
 
-        public async Task<List<Record>> GetAll()
+        public async Task<RepositoryResult<List<Record>>> GetAll()
         {
-            string sql = $"SELECT * FROM [ExcelData];";
-            using var connection = new SqlConnection(_connectionStringExcelReaderDB);
+            try
+            {
+                string sql = $"SELECT * FROM [ExcelData];";
+                using var connection = new SqlConnection(_connectionStringExcelReaderDB);
 
-            var rows = await connection.QueryAsync(sql);
+                var rows = await connection.QueryAsync(sql);
 
+                
+                var recordList = MapDynamicToRecord(rows);
 
-            return MapDynamicToRecord(rows);
+                return new RepositoryResult<List<Record>>()
+                {
+                    IsSuccessful = true,
+                    Data = recordList
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new RepositoryResult<List<Record>>()
+                {
+                    IsSuccessful = false,
+                    ErrorMessage = $"Error while accessing database: {ex.Message}"
+                };
+            }
+            
         }
         
         private List<Record> MapDynamicToRecord(IEnumerable<dynamic> dataFromDb)
@@ -104,12 +144,21 @@ namespace ExcelReaderDynamic.Repository
             }
             return records;
         }
-        public async Task ExecuteAsync(string sql, string connectionstring)
+        public async Task<RepositoryResult<bool>> ExecuteAsync(string sql, string connectionstring)
         {
+            try
+            {
+                using var connection = new SqlConnection(connectionstring);
+                await connection.ExecuteAsync(sql);
 
-            using var connection = new SqlConnection(connectionstring);
-
-            await connection.ExecuteAsync(sql);
+                return RepositoryResult<bool>.NonQuerrrySuccess();
+            }
+            catch (Exception ex) 
+            {
+                return RepositoryResult<bool>.NonQuerrryFail($"Error while accessing database: {ex.Message}");
+            }
+                
+ 
         }
 
 

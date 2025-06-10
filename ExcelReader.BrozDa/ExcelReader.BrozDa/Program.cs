@@ -26,7 +26,7 @@ namespace ExcelReaderDynamic
         public static ServiceProvider BuildServices(ServiceCollection services)
         {
             var repoConfiguration = new ConfigurationBuilder()
-                .AddJsonFile(@"E:\Git Repos\CodeReviews.Console.ExcelReader\ExcelReader.BrozDa\ExcelReader.Brozda\appconfig.json")
+                .AddJsonFile(Path.Combine(Environment.CurrentDirectory,"appconfig.json"))
                 .Build();
 
             services.AddSingleton<IConfiguration>(repoConfiguration);

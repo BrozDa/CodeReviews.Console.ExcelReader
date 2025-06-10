@@ -1,56 +1,75 @@
 ﻿using CsvHelper;
+using ExcelReader.Brozda.Models;
 using System.Globalization;
 
 namespace ExcelReaderDynamic.Services
 {
     internal class CsvReaderService
     {
-        public List<Record> ReadAllRecords(string filePath)
+        public ReadingResult<List<Record>> ReadAllRecords(string filePath)
         {
-            using StreamReader reader = new StreamReader(filePath);
-
-            using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
-
-            csvReader.Read();
-            csvReader.ReadHeader();
-
-
-            List<string> headers = GetHeaders(csvReader);
-            List<Record> records = new ();
-
-            while (csvReader.Read())
+            try
             {
-                records.Add(new Record
+                using StreamReader reader = new StreamReader(filePath);
+
+                using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
+
+                csvReader.Read();
+                csvReader.ReadHeader();
+
+
+                List<string> headers = GetHeaders(csvReader);
+                List<Record> records = new();
+
+                while (csvReader.Read())
                 {
-                    Headers = headers,
-                    Data = csvReader.Parser.Record?.ToList() ?? new List<string>()
-                });
+                    records.Add(new Record
+                    {
+                        Headers = headers,
+                        Data = csvReader.Parser.Record?.ToList() ?? new List<string>()
+                    });
+                }
+
+                return ReadingResult<List<Record>>.Success(records);
+            }
+            catch (Exception ex)
+            {
+                return ReadingResult<List<Record>>.Fail($"Error while reading the file: {ex.Message}");
             }
 
-            return records;
         }
         private List<string> GetHeaders(CsvReader reader) => reader.HeaderRecord?.ToList() ?? new List<string>();
 
-        public void WriteToFile(string path, List<Record> records)
+        public ReadingResult<bool> WriteToFile(string path, List<Record> records)
         {
-            using StreamWriter writer = new StreamWriter(path);
-            using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-
-            foreach (var header in records[0].Headers)
+            try
             {
-                csvWriter.WriteField(header);
-            }
-                
-            csvWriter.NextRecord();
+                using StreamWriter writer = new StreamWriter(path);
+                using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
 
-            foreach (var record in records)
-            {
-                foreach (var field in record.Data)
+                foreach (var header in records[0].Headers)
                 {
-                    csvWriter.WriteField(field);
+                    csvWriter.WriteField(header);
                 }
+
                 csvWriter.NextRecord();
+
+                foreach (var record in records)
+                {
+                    foreach (var field in record.Data)
+                    {
+                        csvWriter.WriteField(field);
+                    }
+                    csvWriter.NextRecord();
+                }
+
+                return ReadingResult<bool>.Success(true);
             }
+            catch (Exception ex)
+            {
+                return ReadingResult<bool>.Fail($"Error while writing to file: {ex.Message}");
+            }
+
 
         }
     }
